@@ -75,7 +75,7 @@ public class PhotoGalleryFragment extends Fragment {
         }
 
         public void bindGalleryItem(final GalleryItem item) {
-            this.mTitleTextView.setText(item.getCaption());
+            this.mTitleTextView.setText(item.getTitle());
         }
     }
 
