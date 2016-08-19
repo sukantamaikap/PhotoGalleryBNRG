@@ -64,7 +64,7 @@ public class FlickrFetcher {
         return new String(this.getUrlBytes(urlSpec));
     }
 
-    public List<GalleryItem> fetchItem() {
+    public List<GalleryItem> fetchItem(final int getPage) {
         final List<GalleryItem> items = new ArrayList<>();
         try {
             final String uri = Uri.parse("https://api.flickr.com/services/rest")
@@ -74,12 +74,12 @@ public class FlickrFetcher {
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
                     .appendQueryParameter("extras", "url_s")
+                    .appendQueryParameter("page", String.valueOf(getPage))
                     .build()
                     .toString();
             final String jsonString = this.getUrlString(uri);
             Log.i(TAG, "Received JSON : " + jsonString);
             final JSONObject jsonBody = new JSONObject(jsonString);
-//            this.parseItems(items, jsonBody);
             this.parseItemUsingGson(items, jsonBody);
         } catch (IOException e) {
             Log.e(TAG, "Failed to fetch items", e);
@@ -87,24 +87,6 @@ public class FlickrFetcher {
             Log.e(TAG, "Failed to parse jSon", e);
         }
         return items;
-    }
-
-    private void parseItems(final List<GalleryItem> items, final JSONObject jsonBody) throws JSONException {
-        final JSONObject photoJSonObject = jsonBody.getJSONObject("photos");
-        final JSONArray photoJsonArray = photoJSonObject.getJSONArray("photo");
-
-        for (int i = 0; i < photoJsonArray.length(); i++) {
-            final JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
-            final GalleryItem galleryItem = new GalleryItem();
-            galleryItem.setId(photoJsonObject.getString("id"));
-            galleryItem.setTitle(photoJsonObject.getString("title"));
-
-            if (photoJSonObject.has("url_s")) {
-                galleryItem.setUrl_S(photoJsonObject.getString("url_s"));
-            }
-
-            items.add(galleryItem);
-        }
     }
 
     private void parseItemUsingGson(final List<GalleryItem> items, final JSONObject jsonBody) throws JSONException {
