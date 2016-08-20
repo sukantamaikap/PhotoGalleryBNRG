@@ -27,7 +27,6 @@ public class PhotoGalleryFragment extends Fragment {
     private RecyclerView mPhotoRecyclerView;
     private GridLayoutManager mLayoutManager;
     private int mPastVisibleItems, mVisibleItemCount, mTotalItemCount;
-    private boolean mLoading = true;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
