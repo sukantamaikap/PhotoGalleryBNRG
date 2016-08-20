@@ -1,8 +1,11 @@
 package com.bignerdranch.android.photogallerybnrg;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -13,7 +16,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,7 @@ public class PhotoGalleryFragment extends Fragment {
     private List<GalleryItem> mItems = new ArrayList<>();
     private RecyclerView mPhotoRecyclerView;
     private GridLayoutManager mLayoutManager;
+    private ThumbnailDownloader<PhotoHolder> mThumbnailDownloader;
     private int mPastVisibleItems, mVisibleItemCount, mTotalItemCount;
 
     public static PhotoGalleryFragment newInstance() {
@@ -39,6 +42,21 @@ public class PhotoGalleryFragment extends Fragment {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
         new FetchItemTask(PAGE_COUNT++).execute();
+
+        final Handler responseHandler = new Handler();
+        this.mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
+        this.mThumbnailDownloader.setThumbnailDownloadListener(new ThumbnailDownloader.ThumbnailDownloadListener<PhotoHolder>() {
+
+            @Override
+            public void onThumbnailDownloaded(final PhotoHolder target, final Bitmap thumbnail) {
+                final Drawable drawable = new BitmapDrawable(getResources(), thumbnail);
+                target.bindDrawable(drawable);
+            }
+        });
+
+        this.mThumbnailDownloader.start();
+        this.mThumbnailDownloader.getLooper();
+        Log.i(TAG, "Background thread started");
     }
 
     @Nullable
@@ -126,9 +144,11 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(final PhotoHolder holder, final int position) {
-            final GalleryItem galleryItem = this.mGalleryItems.get(position);
             final Drawable placeHolder = PhotoGalleryFragment.this.getResources().getDrawable(R.drawable.bill_up_close);
             holder.bindDrawable(placeHolder);
+
+            final GalleryItem galleryItem = this.mGalleryItems.get(position);
+            PhotoGalleryFragment.this.mThumbnailDownloader.queueThumbnail(holder, galleryItem.getUrl_S());
         }
 
         @Override
@@ -152,13 +172,8 @@ public class PhotoGalleryFragment extends Fragment {
             Log.d(TAG, "SCROLL dy : " + dy);
             if (dy > 0) {
                 PhotoGalleryFragment.this.mVisibleItemCount = PhotoGalleryFragment.this.mLayoutManager.getChildCount();
-                Log.d(TAG, "visibleItemCount -> " + PhotoGalleryFragment.this.mVisibleItemCount);
-
                 PhotoGalleryFragment.this.mTotalItemCount = PhotoGalleryFragment.this.mLayoutManager.getItemCount();
-                Log.d(TAG, "totalItemCount -> " + PhotoGalleryFragment.this.mTotalItemCount);
-
                 PhotoGalleryFragment.this.mPastVisibleItems = PhotoGalleryFragment.this.mLayoutManager.findFirstVisibleItemPosition();
-                Log.d(TAG, "pastVisibleItems -> " + PhotoGalleryFragment.this.mPastVisibleItems);
 
                 if ( (mVisibleItemCount + mPastVisibleItems) >= mTotalItemCount) {
                     Log.d(TAG, "END OF ITEMS REACHED, TRIGGER FETCH..");
@@ -166,5 +181,18 @@ public class PhotoGalleryFragment extends Fragment {
                 }
             }
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        this.mThumbnailDownloader.clearQueue();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        this.mThumbnailDownloader.quit();
+        Log.i(TAG, "BACKGROUND THREAD DESTROYED");
     }
 }
