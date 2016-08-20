@@ -1,5 +1,6 @@
 package com.bignerdranch.android.photogallerybnrg;
 
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -11,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -96,15 +98,15 @@ public class PhotoGalleryFragment extends Fragment {
     }
 
     private class PhotoHolder extends RecyclerView.ViewHolder {
-        private TextView mTitleTextView;
+        private ImageView mItemImageView;
 
         public PhotoHolder(View itemView) {
             super(itemView);
-            this.mTitleTextView = (TextView) itemView;
+            this.mItemImageView = (ImageView) itemView.findViewById(R.id.fragment_photo_gallery_image_view);
         }
 
-        public void bindGalleryItem(final GalleryItem item) {
-            this.mTitleTextView.setText(item.getTitle());
+        public void bindDrawable(final Drawable drawable) {
+            this.mItemImageView.setImageDrawable(drawable);
         }
     }
 
@@ -117,14 +119,16 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         public PhotoHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            final TextView textView = new TextView(PhotoGalleryFragment.this.getActivity());
-            return new PhotoHolder(textView);
+            final LayoutInflater inflater = LayoutInflater.from(PhotoGalleryFragment.this.getActivity());
+            final View view = inflater.inflate(R.layout.gallery_item, parent, false);
+            return new PhotoHolder(view);
         }
 
         @Override
-        public void onBindViewHolder(PhotoHolder holder, int position) {
+        public void onBindViewHolder(final PhotoHolder holder, final int position) {
             final GalleryItem galleryItem = this.mGalleryItems.get(position);
-            holder.bindGalleryItem(galleryItem);
+            final Drawable placeHolder = PhotoGalleryFragment.this.getResources().getDrawable(R.drawable.bill_up_close);
+            holder.bindDrawable(placeHolder);
         }
 
         @Override
