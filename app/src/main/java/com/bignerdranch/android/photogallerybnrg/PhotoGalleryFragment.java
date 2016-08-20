@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class PhotoGalleryFragment extends Fragment {
     private static final String TAG = "PhotoGalleryFragment";
     private static int PAGE_COUNT = 0;
     private List<GalleryItem> mItems = new ArrayList<>();
-    private RecyclerView mPhotoRecycleView;
+    private RecyclerView mPhotoRecyclerView;
     private GridLayoutManager mLayoutManager;
     private int mPastVisibleItems, mVisibleItemCount, mTotalItemCount;
     private boolean mLoading = true;
@@ -45,17 +46,26 @@ public class PhotoGalleryFragment extends Fragment {
                              @Nullable final ViewGroup container,
                              @Nullable final Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
-        this.mPhotoRecycleView = (RecyclerView) view.findViewById(R.id.fragment_photo_gallery_recycle_view);
+        this.mPhotoRecyclerView = (RecyclerView) view.findViewById(R.id.fragment_photo_gallery_recycle_view);
         this.mLayoutManager = new GridLayoutManager(this.getActivity(), 3);
-        this.mPhotoRecycleView.setLayoutManager(mLayoutManager);
-        this.mPhotoRecycleView.addOnScrollListener(new PhotoGalleryOnScrollListener());
+        this.mPhotoRecyclerView.setLayoutManager(mLayoutManager);
+        this.mPhotoRecyclerView.addOnScrollListener(new PhotoGalleryOnScrollListener());
+        this.mPhotoRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            private static final int COL_WIDTH = 300;
+
+            @Override
+            public void onGlobalLayout() {
+                final int numColumns = PhotoGalleryFragment.this.mPhotoRecyclerView.getWidth() / COL_WIDTH;
+                PhotoGalleryFragment.this.mLayoutManager.setSpanCount(numColumns);
+            }
+        });
         this.setupAdapter();
         return view;
     }
 
     private void setupAdapter() {
         if (this.isAdded()) {
-            this.mPhotoRecycleView.setAdapter(new PhotoAdapter(mItems));
+            this.mPhotoRecyclerView.setAdapter(new PhotoAdapter(mItems));
         }
     }
 
@@ -77,7 +87,7 @@ public class PhotoGalleryFragment extends Fragment {
             if (pageCount > 0) {
                 Log.i(TAG, "NEW PAGE, ADD TO THE EXISTING LIST OF ITEMS");
                 PhotoGalleryFragment.this.mItems.addAll(items);
-                PhotoGalleryFragment.this.mPhotoRecycleView.getAdapter().notifyDataSetChanged();
+                PhotoGalleryFragment.this.mPhotoRecyclerView.getAdapter().notifyDataSetChanged();
 
             } else {
                 PhotoGalleryFragment.this.mItems = items;
