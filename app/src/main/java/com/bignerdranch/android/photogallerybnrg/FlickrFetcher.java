@@ -3,6 +3,8 @@ package com.bignerdranch.android.photogallerybnrg;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,7 +64,7 @@ public class FlickrFetcher {
         return new String(this.getUrlBytes(urlSpec));
     }
 
-    public List<GalleryItem> fetchItem() {
+    public List<GalleryItem> fetchItem(final int getPage) {
         final List<GalleryItem> items = new ArrayList<>();
         try {
             final String uri = Uri.parse("https://api.flickr.com/services/rest")
@@ -72,12 +74,13 @@ public class FlickrFetcher {
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
                     .appendQueryParameter("extras", "url_s")
+                    .appendQueryParameter("page", String.valueOf(getPage))
                     .build()
                     .toString();
             final String jsonString = this.getUrlString(uri);
             Log.i(TAG, "Received JSON : " + jsonString);
             final JSONObject jsonBody = new JSONObject(jsonString);
-            this.parseItems(items, jsonBody);
+            this.parseItemUsingGson(items, jsonBody);
         } catch (IOException e) {
             Log.e(TAG, "Failed to fetch items", e);
         } catch (JSONException e) {
@@ -86,20 +89,14 @@ public class FlickrFetcher {
         return items;
     }
 
-    private void parseItems(final List<GalleryItem> items, final JSONObject jsonBody) throws JSONException {
+    private void parseItemUsingGson(final List<GalleryItem> items, final JSONObject jsonBody) throws JSONException {
         final JSONObject photoJSonObject = jsonBody.getJSONObject("photos");
         final JSONArray photoJsonArray = photoJSonObject.getJSONArray("photo");
 
         for (int i = 0; i < photoJsonArray.length(); i++) {
             final JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
-            final GalleryItem galleryItem = new GalleryItem();
-            galleryItem.setId(photoJsonObject.getString("id"));
-            galleryItem.setCaption(photoJsonObject.getString("title"));
-
-            if (photoJSonObject.has("url_s")) {
-                galleryItem.setUrl(photoJsonObject.getString("url_s"));
-            }
-
+            final Gson gson = new Gson();
+            final GalleryItem galleryItem = gson.fromJson(photoJsonObject.toString(), GalleryItem.class);
             items.add(galleryItem);
         }
     }
