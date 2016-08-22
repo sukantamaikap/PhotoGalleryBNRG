@@ -98,7 +98,12 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         protected List<GalleryItem> doInBackground(Void... voids) {
-            return new FlickrFetcher().fetchItem(this.pageCount);
+            final String queryString = "dog";
+            if (queryString == null) {
+                return new FlickrFetcher().fetchRecentPhotos(String.valueOf(this.pageCount));
+            } else {
+                return new FlickrFetcher().searchPhotos(queryString);
+            }
         }
 
         @Override
