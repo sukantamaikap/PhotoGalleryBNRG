@@ -10,8 +10,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -41,7 +45,8 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
-        new FetchItemTask(PAGE_COUNT++).execute();
+        this.setHasOptionsMenu(Boolean.TRUE);
+        this.updateItem();
 
         final Handler responseHandler = new Handler();
         this.mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
@@ -82,6 +87,58 @@ public class PhotoGalleryFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_photo_gallery, menu);
+
+        final MenuItem searchItem = menu.findItem(R.id.menu_item_search);
+        final SearchView searchView = (SearchView) searchItem.getActionView();
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(final String query) {
+                Log.d(TAG, "Query text submitted : " + query);
+                QueryPreferences.setStoredQuery(PhotoGalleryFragment.this.getActivity(), query);
+                PhotoGalleryFragment.this.updateItem();
+                PhotoGalleryFragment.PAGE_COUNT = 0;
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(final String newText) {
+                Log.d(TAG, "Query text change : " + newText);
+                return false;
+            }
+        });
+
+        searchView.setOnSearchClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View view) {
+                final String query = QueryPreferences.getStoedQuery(PhotoGalleryFragment.this.getActivity());
+                searchView.setQuery(query, false);
+            }
+        });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_clear :
+                QueryPreferences.setStoredQuery(PhotoGalleryFragment.this.getActivity(), null);
+                PhotoGalleryFragment.this.updateItem();
+                return true;
+
+            default :
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void updateItem() {
+        final String searchQueryParam = QueryPreferences.getStoedQuery(this.getActivity());
+        new FetchItemTask(searchQueryParam, PAGE_COUNT++).execute();
+    }
+
     private void setupAdapter() {
         if (this.isAdded()) {
             this.mPhotoRecyclerView.setAdapter(new PhotoAdapter(mItems));
@@ -91,18 +148,19 @@ public class PhotoGalleryFragment extends Fragment {
     private class FetchItemTask extends AsyncTask<Void, Void, List<GalleryItem>> {
 
         private int pageCount;
+        private String mQuery;
 
-        public FetchItemTask(final int count) {
+        public FetchItemTask(final String query, final int count) {
             this.pageCount = count;
+            this.mQuery = query;
         }
 
         @Override
         protected List<GalleryItem> doInBackground(Void... voids) {
-            final String queryString = "dog";
-            if (queryString == null) {
+            if (this.mQuery == null) {
                 return new FlickrFetcher().fetchRecentPhotos(String.valueOf(this.pageCount));
             } else {
-                return new FlickrFetcher().searchPhotos(queryString);
+                return new FlickrFetcher().searchPhotos(this.mQuery);
             }
         }
 
@@ -173,8 +231,6 @@ public class PhotoGalleryFragment extends Fragment {
                                final int dx,
                                final int dy){
             super.onScrolled(recyclerView, dx, dy);
-            Log.d(TAG, "SCROLL dx : " + dx);
-            Log.d(TAG, "SCROLL dy : " + dy);
             if (dy > 0) {
                 PhotoGalleryFragment.this.mVisibleItemCount = PhotoGalleryFragment.this.mLayoutManager.getChildCount();
                 PhotoGalleryFragment.this.mTotalItemCount = PhotoGalleryFragment.this.mLayoutManager.getItemCount();
@@ -182,7 +238,7 @@ public class PhotoGalleryFragment extends Fragment {
 
                 if ( (mVisibleItemCount + mPastVisibleItems) >= mTotalItemCount) {
                     Log.d(TAG, "END OF ITEMS REACHED, TRIGGER FETCH..");
-                    new FetchItemTask(PAGE_COUNT++).execute();
+                    PhotoGalleryFragment.this.updateItem();
                 }
             }
         }
