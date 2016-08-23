@@ -1,5 +1,7 @@
 package com.bignerdranch.android.photogallerybnrg;
 
+import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -19,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
@@ -100,6 +103,8 @@ public class PhotoGalleryFragment extends Fragment {
             public boolean onQueryTextSubmit(final String query) {
                 Log.d(TAG, "Query text submitted : " + query);
                 QueryPreferences.setStoredQuery(PhotoGalleryFragment.this.getActivity(), query);
+                PhotoGalleryFragment.this.hideSoftKeyboard();
+                searchView.onActionViewCollapsed();
                 PhotoGalleryFragment.this.updateItem();
                 PhotoGalleryFragment.PAGE_COUNT = 0;
                 return true;
@@ -241,6 +246,15 @@ public class PhotoGalleryFragment extends Fragment {
                     PhotoGalleryFragment.this.updateItem();
                 }
             }
+        }
+    }
+
+    private void hideSoftKeyboard() {
+        // Check if no view has focus:
+        final View view = this.getActivity().getCurrentFocus();
+        if (view != null) {
+            final InputMethodManager imm = (InputMethodManager)this.getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 
