@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,7 @@ public class PhotoGalleryFragment extends Fragment {
     private RecyclerView mPhotoRecyclerView;
     private GridLayoutManager mLayoutManager;
     private ThumbnailDownloader<PhotoHolder> mThumbnailDownloader;
+    private ProgressBar mProgressBar;
     private int mPastVisibleItems, mVisibleItemCount, mTotalItemCount;
 
     public static PhotoGalleryFragment newInstance() {
@@ -82,12 +84,27 @@ public class PhotoGalleryFragment extends Fragment {
 
             @Override
             public void onGlobalLayout() {
-                final int numColumns = PhotoGalleryFragment.this.mPhotoRecyclerView.getWidth() / COL_WIDTH;
-                PhotoGalleryFragment.this.mLayoutManager.setSpanCount(numColumns);
+                if (PhotoGalleryFragment.this.mPhotoRecyclerView.getVisibility() == View.VISIBLE) {
+                    final int numColumns = PhotoGalleryFragment.this.mPhotoRecyclerView.getWidth() / COL_WIDTH;
+                    PhotoGalleryFragment.this.mLayoutManager.setSpanCount(numColumns);
+                }
             }
         });
+
+        this.mProgressBar = (ProgressBar) view.findViewById(R.id.fragment_progress_bar);
+        showProgressBar(Boolean.TRUE);
         this.setupAdapter();
         return view;
+    }
+
+    public void showProgressBar(Boolean show) {
+        if (show) {
+            this.mProgressBar.setVisibility(View.VISIBLE);
+            this.mPhotoRecyclerView.setVisibility(View.GONE);
+        } else {
+            this.mProgressBar.setVisibility(View.GONE);
+            this.mPhotoRecyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -180,6 +197,7 @@ public class PhotoGalleryFragment extends Fragment {
                 PhotoGalleryFragment.this.mItems = items;
                 PhotoGalleryFragment.this.setupAdapter();
             }
+            PhotoGalleryFragment.this.showProgressBar(Boolean.FALSE);
         }
     }
 
