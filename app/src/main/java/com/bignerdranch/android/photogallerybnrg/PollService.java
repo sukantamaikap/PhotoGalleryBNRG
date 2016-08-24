@@ -57,6 +57,19 @@ public class PollService extends IntentService {
         QueryPreferences.setLastResultId(this, resultId);
     }
 
+    public static void setServiceAlarm(final Context context, final boolean isOn) {
+        final Intent intent = PollService.newIntent(context);
+        final PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, 0);
+        final AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        if (isOn) {
+            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), POLL_INTERVAL, pendingIntent);
+        } else {
+            alarmManager.cancel(pendingIntent);
+            pendingIntent.cancel();
+        }
+    }
+
     private boolean isNetworkAvailableAndConnected() {
         final ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
         final boolean isNetworkAvailable = connectivityManager.getActiveNetworkInfo() != null;

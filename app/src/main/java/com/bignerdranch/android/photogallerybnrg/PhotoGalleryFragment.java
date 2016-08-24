@@ -53,8 +53,7 @@ public class PhotoGalleryFragment extends Fragment {
         this.setHasOptionsMenu(Boolean.TRUE);
         this.updateItem();
 
-        final Intent intent = PollService.newIntent(this.getActivity());
-        this.getActivity().startService(intent);
+        PollService.setServiceAlarm(this.getContext(), Boolean.TRUE);
 
         final Handler responseHandler = new Handler();
         this.mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
