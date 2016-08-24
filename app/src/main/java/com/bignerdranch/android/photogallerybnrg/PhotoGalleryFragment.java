@@ -1,7 +1,7 @@
 package com.bignerdranch.android.photogallerybnrg;
 
-import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -34,7 +34,7 @@ import java.util.List;
 public class PhotoGalleryFragment extends Fragment {
 
     private static final String TAG = "PhotoGalleryFragment";
-    private static int PAGE_COUNT = 0;
+    public static int PAGE_COUNT = 0;
     private List<GalleryItem> mItems = new ArrayList<>();
     private RecyclerView mPhotoRecyclerView;
     private GridLayoutManager mLayoutManager;
@@ -52,6 +52,9 @@ public class PhotoGalleryFragment extends Fragment {
         this.setRetainInstance(true);
         this.setHasOptionsMenu(Boolean.TRUE);
         this.updateItem();
+
+        final Intent intent = PollService.newIntent(this.getActivity());
+        this.getActivity().startService(intent);
 
         final Handler responseHandler = new Handler();
         this.mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);

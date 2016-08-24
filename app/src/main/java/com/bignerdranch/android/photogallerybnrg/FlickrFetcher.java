@@ -78,7 +78,7 @@ public class FlickrFetcher {
         return downloadGalleryItem(url);
     }
 
-    public List<GalleryItem>    searchPhotos(final String query) {
+    public List<GalleryItem> searchPhotos(final String query) {
         final String url = this.buildUrl(SEARCH_METHOD, query, null);
         return downloadGalleryItem(url);
     }
