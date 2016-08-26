@@ -2,11 +2,15 @@ package com.bignerdranch.android.photogallerybnrg;
 
 import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.os.SystemClock;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
 import java.util.List;
@@ -17,7 +21,7 @@ import java.util.List;
 public class PollService extends IntentService {
 
     private static final String TAG = "PollService";
-    private static final long POLL_INTERVAL = 1000 * 60;
+    private static final long POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
 
     public PollService() {
         super(TAG);
@@ -49,9 +53,25 @@ public class PollService extends IntentService {
 
         final String resultId = items.get(0).getId();
         if (resultId.equals(lastResultId)) {
-            Log.i(TAG, "Got an old result : " + resultId);
+            Log.d(TAG, "Got an old result : " + resultId);
         } else {
-            Log.i(TAG, "Got a new result : " + resultId);
+            Log.d(TAG, "Got a new result : " + resultId);
+            Log.d(TAG, "Build a new notification");
+            final Resources resources = this.getResources();
+            final Intent photoGalleryIntent = PhotoGalleryActivity.newIntent(this);
+            final PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, photoGalleryIntent, 0);
+            final Notification notification = new NotificationCompat
+                    .Builder(this)
+                    .setTicker(resources.getString(R.string.new_picture_title))
+                    .setSmallIcon(android.R.drawable.ic_menu_report_image)
+                    .setContentTitle(resources.getString(R.string.new_picture_title))
+                    .setContentTitle(resources.getString(R.string.new_picture_text))
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(Boolean.TRUE)
+                    .build();
+
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            notificationManager.notify(0, notification);
         }
 
         QueryPreferences.setLastResultId(this, resultId);
@@ -63,11 +83,19 @@ public class PollService extends IntentService {
         final AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         if (isOn) {
+            Log.d(TAG, "STARTING THE ALARM");
             alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), POLL_INTERVAL, pendingIntent);
         } else {
+            Log.d(TAG, "STOPPING THE ALARM");
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel();
         }
+    }
+
+    public static boolean isServiceAlarmOn(final Context context) {
+        final Intent intent = PollService.newIntent(context);
+        final PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
+        return pendingIntent != null;
     }
 
     private boolean isNetworkAvailableAndConnected() {

@@ -53,6 +53,8 @@ public class PhotoGalleryFragment extends Fragment {
         this.setHasOptionsMenu(Boolean.TRUE);
         this.updateItem();
 
+//        final Intent intent = PollService.newIntent(this.getActivity());
+//        this.getActivity().startService(intent);
         PollService.setServiceAlarm(this.getContext(), Boolean.TRUE);
 
         final Handler responseHandler = new Handler();
@@ -143,6 +145,13 @@ public class PhotoGalleryFragment extends Fragment {
                 searchView.setQuery(query, false);
             }
         });
+
+        final MenuItem toggleItem = menu.findItem(R.id.menu_item_toggle_polling);
+        if (PollService.isServiceAlarmOn(this.getActivity())) {
+            toggleItem.setTitle(R.string.stop_polling);
+        } else {
+            toggleItem.setTitle(R.string.start_polling);
+        }
     }
 
     @Override
@@ -151,6 +160,12 @@ public class PhotoGalleryFragment extends Fragment {
             case R.id.menu_item_clear :
                 QueryPreferences.setStoredQuery(PhotoGalleryFragment.this.getActivity(), null);
                 PhotoGalleryFragment.this.updateItem();
+                return true;
+
+            case R.id.menu_item_toggle_polling :
+                final boolean shouldStartAlarm = !PollService.isServiceAlarmOn(this.getActivity());
+                PollService.setServiceAlarm(this.getActivity(), shouldStartAlarm);
+                this.getActivity().invalidateOptionsMenu();
                 return true;
 
             default :
