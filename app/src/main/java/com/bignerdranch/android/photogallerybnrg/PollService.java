@@ -22,6 +22,8 @@ public class PollService extends IntentService {
 
     private static final String TAG = "PollService";
     private static final long POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
+    public static final String ACTION_SHOW_NOTIFICATION = "com.bignardranch.android.photogallery.SHOW_NOTIFICATION";
+    public static final String PREM_PRIVATE = "com.bignardranch.android.photogallery.PRIVATE";
 
     public PollService() {
         super(TAG);
@@ -72,6 +74,7 @@ public class PollService extends IntentService {
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
             notificationManager.notify(0, notification);
+            this.sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PREM_PRIVATE);
         }
 
         QueryPreferences.setLastResultId(this, resultId);
@@ -90,6 +93,8 @@ public class PollService extends IntentService {
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel();
         }
+
+        QueryPreferences.setAlarmOn(context, isOn);
     }
 
     public static boolean isServiceAlarmOn(final Context context) {
