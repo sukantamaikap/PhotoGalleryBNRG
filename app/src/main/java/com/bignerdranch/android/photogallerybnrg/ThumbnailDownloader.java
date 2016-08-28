@@ -34,7 +34,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
             public void handleMessage(final Message msg) {
                 if (msg.what == MESSAGE_DOWNLOAD) {
                     final T target = (T) msg.obj;
-                    Log.i(TAG, "GOT REQUEST URL : " + ThumbnailDownloader.this.mRequestMap.get(target));
+                    Log.v(TAG, "GOT REQUEST URL : " + ThumbnailDownloader.this.mRequestMap.get(target));
                     ThumbnailDownloader.this.handRequest(target);
                 }
             }
@@ -42,7 +42,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     }
 
     public void queueThumbnail(final T target, final String url) {
-        Log.i(TAG, "GET CONTENT FROM : " + url);
+        Log.v(TAG, "GET CONTENT FROM : " + url);
 
         if (url == null) {
             this.mRequestMap.remove(target);
@@ -61,7 +61,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 
             final byte[] bitmapByte  = new FlickrFetcher().getUrlBytes(url);
             final Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapByte, 0, bitmapByte.length);
-            Log.i(TAG, "BITMAP CREATED");
+            Log.v(TAG, "BITMAP CREATED");
 
             this.mResponseHandler.post(new Runnable() {
                 @Override

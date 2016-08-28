@@ -1,5 +1,6 @@
 package com.bignerdranch.android.photogallerybnrg;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
@@ -10,7 +11,6 @@ import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
 import java.util.List;
@@ -24,6 +24,8 @@ public class PollService extends IntentService {
     private static final long POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
     public static final String ACTION_SHOW_NOTIFICATION = "com.bignardranch.android.photogallery.SHOW_NOTIFICATION";
     public static final String PREM_PRIVATE = "com.bignardranch.android.photogallery.PRIVATE";
+    public static final String NOTIFICATION = "NOTIFICATION";
+    public static final String REQUEST_CODE = "REQUEST_CODE";
 
     public PollService() {
         super(TAG);
@@ -36,6 +38,7 @@ public class PollService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         if (!isNetworkAvailableAndConnected()) {
+            Log.d(TAG, "NO NETWORK FOUND, WILL NOT EXECUTE #onHandleIntent");
             return;
         }
 
@@ -44,7 +47,7 @@ public class PollService extends IntentService {
         List<GalleryItem> items;
 
         if (query == null) {
-            items = new FlickrFetcher().fetchRecentPhotos(String.valueOf(PhotoGalleryFragment.PAGE_COUNT));
+            items = new FlickrFetcher().fetchRecentPhotos(String.valueOf(1));
         } else {
             items = new FlickrFetcher().searchPhotos(query);
         }
@@ -54,11 +57,9 @@ public class PollService extends IntentService {
         }
 
         final String resultId = items.get(0).getId();
-        if (resultId.equals(lastResultId)) {
-            Log.d(TAG, "Got an old result : " + resultId);
-        } else {
-            Log.d(TAG, "Got a new result : " + resultId);
-            Log.d(TAG, "Build a new notification");
+        if (!resultId.equals(lastResultId)) {
+            Log.d(TAG, "GOT A NEW RESULT : " + resultId);
+            Log.d(TAG, "BUILD A NEW NOTIFICATION");
             final Resources resources = this.getResources();
             final Intent photoGalleryIntent = PhotoGalleryActivity.newIntent(this);
             final PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, photoGalleryIntent, 0);
@@ -72,24 +73,31 @@ public class PollService extends IntentService {
                     .setAutoCancel(Boolean.TRUE)
                     .build();
 
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-            notificationManager.notify(0, notification);
-            this.sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PREM_PRIVATE);
+            this.showBackgroundNotification(0, notification);
         }
 
         QueryPreferences.setLastResultId(this, resultId);
     }
 
+    private void showBackgroundNotification(final int requestCode, final Notification notification) {
+        final Intent intent = new Intent(ACTION_SHOW_NOTIFICATION);
+        intent.putExtra(PollService.REQUEST_CODE, requestCode);
+        intent.putExtra(PollService.NOTIFICATION, notification);
+        this.sendOrderedBroadcast(intent, PollService.PREM_PRIVATE, null, null, Activity.RESULT_OK, null, null);
+    }
+
     public static void setServiceAlarm(final Context context, final boolean isOn) {
         final Intent intent = PollService.newIntent(context);
+        //this call packages up the call to Activity.startService(intent)
         final PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, 0);
         final AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         if (isOn) {
-            Log.d(TAG, "STARTING THE ALARM");
-            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), POLL_INTERVAL, pendingIntent);
+            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME,
+                    SystemClock.elapsedRealtime(),
+                    POLL_INTERVAL,
+                    pendingIntent);
         } else {
-            Log.d(TAG, "STOPPING THE ALARM");
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel();
         }

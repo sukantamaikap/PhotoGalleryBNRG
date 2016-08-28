@@ -1,7 +1,6 @@
 package com.bignerdranch.android.photogallerybnrg;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -9,7 +8,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -53,8 +51,6 @@ public class PhotoGalleryFragment extends VisibleFragment {
         this.setHasOptionsMenu(Boolean.TRUE);
         this.updateItem();
 
-//        final Intent intent = PollService.newIntent(this.getActivity());
-//        this.getActivity().startService(intent);
         PollService.setServiceAlarm(this.getContext(), Boolean.TRUE);
 
         final Handler responseHandler = new Handler();

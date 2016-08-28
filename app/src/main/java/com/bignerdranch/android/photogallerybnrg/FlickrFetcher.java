@@ -87,7 +87,7 @@ public class FlickrFetcher {
         final List<GalleryItem> items = new ArrayList<>();
         try {
             final String jsonString = this.getUrlString(url);
-            Log.i(TAG, "Received JSON : " + jsonString);
+            Log.v(TAG, "Received JSON : " + jsonString);
             final JSONObject jsonBody = new JSONObject(jsonString);
             this.parseItemUsingGson(items, jsonBody);
         } catch (IOException e) {
