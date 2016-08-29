@@ -1,6 +1,7 @@
 package com.bignerdranch.android.photogallerybnrg;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -214,16 +215,28 @@ public class PhotoGalleryFragment extends VisibleFragment {
         }
     }
 
-    private class PhotoHolder extends RecyclerView.ViewHolder {
+    private class PhotoHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private ImageView mItemImageView;
+        private GalleryItem mGalleryItem;
 
         public PhotoHolder(View itemView) {
             super(itemView);
             this.mItemImageView = (ImageView) itemView.findViewById(R.id.fragment_photo_gallery_image_view);
+            itemView.setOnClickListener(PhotoHolder.this);
         }
 
         public void bindDrawable(final Drawable drawable) {
             this.mItemImageView.setImageDrawable(drawable);
+        }
+
+        public void bindGalleryItem(final GalleryItem galleryItem) {
+            this.mGalleryItem = galleryItem;
+        }
+
+        @Override
+        public void onClick(View view) {
+            final Intent intent = new Intent(Intent.ACTION_VIEW, this.mGalleryItem.getPhotoPageUri());
+            PhotoGalleryFragment.this.startActivity(intent);
         }
     }
 
@@ -247,6 +260,7 @@ public class PhotoGalleryFragment extends VisibleFragment {
             holder.bindDrawable(placeHolder);
 
             final GalleryItem galleryItem = this.mGalleryItems.get(position);
+            holder.bindGalleryItem(galleryItem);
             PhotoGalleryFragment.this.mThumbnailDownloader.queueThumbnail(holder, galleryItem.getUrl_S());
         }
 

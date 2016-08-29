@@ -1,5 +1,7 @@
 package com.bignerdranch.android.photogallerybnrg;
 
+import android.net.Uri;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -14,6 +16,9 @@ public class GalleryItem {
 
     @SerializedName("url_s")
     private String mUrl_S;
+
+    @SerializedName("owner")
+    private String mOwner;
 
     public String getTitle() {
         return mTitle;
@@ -37,5 +42,25 @@ public class GalleryItem {
 
     public void setUrl_S(final String url_S) {
         mUrl_S = url_S;
+    }
+
+    public String getOwner() {
+        return mOwner;
+    }
+
+    public void setOwner(String owner) {
+        mOwner = owner;
+    }
+
+    public Uri getPhotoPageUri() {
+        return Uri.parse("http://www.flickr.com/photos/")
+                .buildUpon()
+                .appendPath(this.mOwner)
+                .appendPath(this.mId)
+                .build();
+    }
+
+    public String toString() {
+        return this.mTitle;
     }
 }
